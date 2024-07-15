@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fashion Details</title>
+    <style>
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background: linear-gradient(to right, #f0f4ff, #fffcf0);
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #c00;
+        }
+        .item {
+            margin: 5px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+        .item span {
+            display: inline-block;
+            width: 45%;
+        }
+        .buttons {
+            display: flex;
+            justify-content: space-between;
+        }
+        .buttons button {
+            background-color: #c00;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="container"></div>
+    <div class="buttons">
+        <button id="prev" onclick="prevPage()">Previous</button>
+        <button id="next" onclick="nextPage()">Next</button>
+    </div>
+
+    <script>
+        let data = [];
+        let currentIndex = 0;
+        let currentFileIndex = 0;
+        const files = ['data/Image_Details.json', 'data/Image_Details2.json'];
+
+        async function fetchData(fileIndex) {
+            try {
+                const response = await fetch(files[fileIndex]);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+                data = await response.json();
+                console.log(data); 
+                currentIndex = 0; 
+                renderPage(currentIndex);
+            } catch (error) {
+                console.error('Error fetching the JSON data:', error);
+            }
+        }
+
+        function renderPage(index) {
+            const app = document.getElementById('app');
+            app.innerHTML = '';
+
+            if (data.length === 0) {
+                app.textContent = 'No data available';
+                return;
+            }
+
+            const item = data[index];
+            const fileName = Object.keys(item)[0];
+            const details = item[fileName];
+
+            const section = document.createElement('div');
+            section.className = 'section';
+
+            const title = document.createElement('div');
+            title.className = 'title';
+            title.textContent = fileName;
+            section.appendChild(title);
+
+            details.forEach(detail => {
+                const [key, valueWithPercent] = detail.split('=');
+                const value = parseInt(valueWithPercent, 10);
+                if (value >= 90) {
+                    const detailItem = document.createElement('div');
+                    detailItem.className = 'item';
+
+                    const detailName = document.createElement('span');
+                    detailName.textContent = key;
+
+                    detailItem.appendChild(detailName);
+                    section.appendChild(detailItem);
+                }
+            });
+
+            app.appendChild(section);
+            updateButtons();
+        }
+
+        function prevPage() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderPage(currentIndex);
+            } else if (currentFileIndex > 0) {
+                currentFileIndex--;
+                fetchData(currentFileIndex);
+            }
+        }
+
+        function nextPage() {
+            if (currentIndex < data.length - 1) {
+                currentIndex++;
+                renderPage(currentIndex);
+            } else if (currentFileIndex < files.length - 1) {
+                currentFileIndex++;
+                fetchData(currentFileIndex);
+            }
+        }
+
+        function updateButtons() {
+            document.getElementById('prev').disabled = currentFileIndex === 0 && currentIndex === 0;
+            document.getElementById('next').disabled = currentFileIndex === files.length - 1 && currentIndex === data.length - 1;
+        }
+
+        fetchData(currentFileIndex);
+    </script>
+</body>
+</html>
